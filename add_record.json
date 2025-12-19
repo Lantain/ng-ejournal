@@ -1,0 +1,41 @@
+{
+  "record": {
+    "user_faculty_id": 13,
+    "user_department_id": 60,
+    "user_id": 2814,
+    "discipline_id": "8051",
+    "topic_id": null,
+    "kind_id": "2",
+    "hour": 2,
+    "date": "2025-09-04",
+    "group_faculty": "13",
+    "course_id": "2",
+    "form_id": "1",
+    "group": "1906,2225",
+    "is_custom_group": false,
+    "semester": "1",
+    "updated_at": "2025-12-14 14:12",
+    "created_at": "2025-12-14 14:12",
+    "id": 328378
+  },
+  "message": "Створено новий запис"
+}
+
+// payload
+
+{
+  "user_faculty_id": 13,
+  "user_department_id": 60,
+  "user_id": 2814,
+  "topic_id": null,
+  "group_faculty": "13",
+  "course_id": "2",
+  "group": "1906,2225",
+  "kind_id": "1",
+  "hour": 2,
+  "discipline_id": "8051",
+  "form_id": "1",
+  "date": "2025-09-04",
+  "is_custom_group": false,
+  "semester": "1"
+}

@@ -1,0 +1,81 @@
+import { Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatMenuModule } from '@angular/material/menu';
+
+@Component({
+  imports: [
+    MatSidenavModule,
+    RouterOutlet,
+    MatListModule,
+    MatIconModule,
+    RouterLink,
+    MatButtonModule,
+    MatToolbarModule,
+    MatMenuModule,
+  ],
+  providers: [AuthService],
+  template: `
+    <div class="h-screen w-screen bg-gray-100">
+      <mat-toolbar>
+        <div class="flex flex-row items-start pr-4">
+          @for (link of links; track link.link) {
+          <button class="w-full" matButton extended [routerLink]="link.link">
+            <mat-icon>{{ link.icon }}</mat-icon>
+            {{ link.label }}
+          </button>
+          }
+        </div>
+        <span style="flex: 1 1 auto;"></span>
+        <div class="flex flex-col items-end pr-4">
+          <p class="font-bold text-sm">{{ user?.name }}</p>
+          <p class="text-xs">{{ department?.faculties?.name }}</p>
+        </div>
+        <button matIconButton [matMenuTriggerFor]="logoutMenu">
+          <mat-icon>logout</mat-icon>
+        </button>
+        <mat-menu #logoutMenu="matMenu">
+          <button mat-menu-item (click)="logout()">Logout</button>
+        </mat-menu>
+      </mat-toolbar>
+      <div class="container mx-auto mt-4">
+        <router-outlet />
+      </div>
+    </div>
+  `,
+})
+export class DashboardLayout {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  get user() {
+    return this.authService.getUser();
+  }
+
+  get department() {
+    const user = this.authService.getUser();
+    const departments = user?.departments;
+    if (departments) {
+      const ds = Array.isArray(departments) ? departments : [departments];
+      return ds.length ? ds[0] : null;
+    } else {
+      return null;
+    }
+  }
+
+  links = [
+    { label: 'Courses', link: 'courses', icon: 'workspaces' },
+    { label: 'Themes', link: 'themes', icon: 'bookmarks' },
+    { label: 'Records', link: 'records', icon: 'event_note' },
+  ];
+}
