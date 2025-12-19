@@ -23,9 +23,9 @@ import { MatMenuModule } from '@angular/material/menu';
   template: `
     <div class="h-screen w-screen bg-gray-100">
       <mat-toolbar>
-        <div class="flex flex-row items-start pr-4">
+        <div class="flex flex-row items-start pr-4 gap-2">
           @for (link of links; track link.link) {
-          <button class="w-full" matButton extended [routerLink]="link.link">
+          <button matButton extended [routerLink]="link.link">
             <mat-icon>{{ link.icon }}</mat-icon>
             {{ link.label }}
           </button>
@@ -40,7 +40,7 @@ import { MatMenuModule } from '@angular/material/menu';
           <mat-icon>logout</mat-icon>
         </button>
         <mat-menu #logoutMenu="matMenu">
-          <button mat-menu-item (click)="logout()">Logout</button>
+          <button mat-menu-item (click)="logout()">Вийти</button>
         </mat-menu>
       </mat-toolbar>
       <div class="container mx-auto mt-4">
@@ -74,8 +74,8 @@ export class DashboardLayout {
   }
 
   links = [
-    { label: 'Courses', link: 'courses', icon: 'workspaces' },
-    { label: 'Themes', link: 'themes', icon: 'bookmarks' },
-    { label: 'Records', link: 'records', icon: 'event_note' },
+    { label: 'Дисципліни', link: 'courses', icon: 'workspaces' },
+    { label: 'Теми', link: 'themes', icon: 'bookmarks' },
+    { label: 'Записи', link: 'records', icon: 'event_note' },
   ];
 }

@@ -10,6 +10,7 @@ import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { RecordComponent } from './record.component';
 import { RecordsListComponent } from './records-list.component';
 import { ReportsComponent } from './reports.component';
+import { BehaviorSubject, switchMap } from 'rxjs';
 
 @Component({
   imports: [
@@ -29,11 +30,18 @@ import { ReportsComponent } from './reports.component';
       @if (records$ | async; as records) {
       <mat-tab label="Додати запис">
         <div class="mt-4">
-          <app-add-records [records]="records"></app-add-records>
+          <app-add-records
+            [records]="records"
+            (recordCreated)="refreshRecords()"
+            (onRemoveRecord)="removeRecord($event)"
+          ></app-add-records>
         </div>
       </mat-tab>
       <mat-tab label="Перегляд записів">
-        <app-records-list [records]="records"></app-records-list>
+        <app-records-list
+          [records]="records"
+          (onRemoveRecord)="removeRecord($event)"
+        ></app-records-list>
       </mat-tab>
       <mat-tab label="Звіт">
         <app-reports [records]="records"></app-reports>
@@ -45,5 +53,17 @@ import { ReportsComponent } from './reports.component';
 export class RecordsPage {
   private recordService = inject(RecordService);
   private authService = inject(AuthService);
-  records$ = this.recordService.getByUserId(this.authService.getUser()!.id);
+  private refreshTrigger$ = new BehaviorSubject<void>(undefined);
+
+  records$ = this.refreshTrigger$.pipe(
+    switchMap(() => this.recordService.getByUserId(this.authService.getUser()!.id))
+  );
+
+  refreshRecords() {
+    this.refreshTrigger$.next();
+  }
+
+  removeRecord(id: number) {
+    this.recordService.delete(id).subscribe(() => this.refreshRecords());
+  }
 }

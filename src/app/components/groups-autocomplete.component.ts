@@ -41,18 +41,18 @@ import { AsyncPipe } from '@angular/common';
         </mat-chip-grid>
 
         <input
-          name="currentGroup"
+          name="filterText"
           placeholder="Ввести групу..."
           #fruitInput
-          [value]="currentGroup()"
-          (input)="currentGroup.set($any($event.target).value)"
+          [value]="filterText()"
+          (input)="filterText.set($any($event.target).value)"
           [matChipInputFor]="chipGrid"
           [matAutocomplete]="auto"
           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
         />
         <mat-autocomplete
           #auto="matAutocomplete"
-          (optionSelected)="selected($event); currentGroup.set('')"
+          (optionSelected)="selected($event); filterText.set('')"
         >
           @for (group of groups; track group.id) {
           <mat-option [value]="group.id">{{ group.name }}</mat-option>
@@ -66,15 +66,15 @@ import { AsyncPipe } from '@angular/common';
 export class GroupsInputComponent {
   constructor() {}
 
-  public facultyId = input<number>();
-  public formId = input<number>();
-  public courseId = input<number>();
+  public facultyId = input<number | null>();
+  public formId = input<number | null>();
+  public courseId = input<number | null>();
 
   groupService = inject(GroupService);
 
   selectedGroups = signal<Group[]>([]);
   groupIds = output<number[]>();
-  currentGroup = signal('');
+  filterText = signal('');
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
@@ -83,7 +83,7 @@ export class GroupsInputComponent {
     toObservable(this.facultyId),
     toObservable(this.formId),
     toObservable(this.courseId),
-    toObservable(this.currentGroup),
+    toObservable(this.filterText),
   ]).pipe(
     map(([groups, facultyId, formId, courseId, filterText]) => {
       return groups
@@ -127,7 +127,7 @@ export class GroupsInputComponent {
         });
       }
     });
-    this.currentGroup.set('');
+    this.filterText.set('');
     event.option.deselect();
   }
 
@@ -142,6 +142,6 @@ export class GroupsInputComponent {
   //     });
   //   }
 
-  //   this.currentGroup.set('');
+  //   this.filterText.set('');
   // }
 }

@@ -26,9 +26,7 @@ interface DisciplineGroup {
   standalone: true,
   imports: [MatListModule, MatDividerModule, DecimalPipe],
   template: `
-    <div class="container mx-auto p-4">
-      <h2 class="text-xl font-bold mb-4">Звіти</h2>
-
+    <div class="container max-w-4xl mx-auto p-4">
       <mat-list>
         @for (discipline of reportData(); track discipline.name) {
         <div class="mb-4 border rounded-lg overflow-hidden">

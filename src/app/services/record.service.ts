@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { API_HEADERS, API_URL } from '../app.config';
-import { map } from 'rxjs';
+import { map, of } from 'rxjs';
 import { ApiResponse, Record } from '../model';
 
 interface AddRecordResponse {
@@ -24,7 +24,7 @@ interface AddRecordResponse {
   id: number;
 }
 
-interface AddRecordRequest {
+export interface AddRecordRequest {
   user_faculty_id: number;
   user_department_id: number;
   user_id: number;
@@ -60,9 +60,11 @@ export class RecordService {
   }
 
   create(value: AddRecordRequest) {
-    return this.http.post<ApiResponse<'record', AddRecordResponse>>(API_URL + '/record', value, {
-      headers: API_HEADERS,
-    });
+    console.log(value);
+    return of(null);
+    // return this.http.post<ApiResponse<'record', AddRecordResponse>>(API_URL + '/record', value, {
+    //   headers: API_HEADERS,
+    // });
   }
 
   update(value: any, recordId: number) {

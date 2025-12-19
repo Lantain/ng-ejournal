@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { Record } from '../model';
 import { MatCardModule } from '@angular/material/card';
 import { RecordComponent } from './record.component';
@@ -57,11 +57,14 @@ import { MatSelectModule } from '@angular/material/select';
     @for(group of groupedRecords(); track group.date) {
     <mat-card appearance="outlined" class="mt-4">
       <mat-card-header>
-        <mat-card-title>{{ group.date }} - {{ group.records.length }} records</mat-card-title>
+        <mat-card-title
+          >{{ group.date }} - {{ group.records.length }}
+          {{ group.records.length === 1 ? 'запис' : 'записів' }}</mat-card-title
+        >
       </mat-card-header>
       <mat-card-content>
         @for(record of group.records; track record.id) {
-        <app-record [record]="record"></app-record>
+        <app-record (remove)="removeRecord(record)" [record]="record"></app-record>
         }
       </mat-card-content>
     </mat-card>
@@ -75,6 +78,7 @@ export class RecordsListComponent {
   selectedForm = signal<number | null>(null);
   selectedCourse = signal<number | null>(null);
   selectedGroup = signal<string | null>(null);
+  onRemoveRecord = output<number>();
 
   uniqueDisciplines = computed(() => {
     const disciplines = new Map<number, { id: number; name: string }>();
@@ -166,4 +170,8 @@ export class RecordsListComponent {
     }));
     return recordGroups;
   });
+
+  removeRecord(record: Record) {
+    this.onRemoveRecord.emit(record.id);
+  }
 }

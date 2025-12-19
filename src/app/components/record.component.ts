@@ -1,11 +1,12 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { Record } from '../model';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
-  imports: [MatCardModule, MatChipsModule, MatIconModule],
+  imports: [MatCardModule, MatChipsModule, MatIconModule, MatButtonModule],
   selector: 'app-record',
   template: `
     <mat-card appearance="outlined" class="my-4">
@@ -39,7 +40,7 @@ import { MatChipsModule } from '@angular/material/chips';
               </mat-chip>
             </mat-chip-set>
           </div>
-          <div class="w-32">
+          <div>
             <mat-chip-set>
               <mat-chip>
                 <div class="flex flex-row items-center">
@@ -58,6 +59,14 @@ import { MatChipsModule } from '@angular/material/chips';
                 </div>
               </mat-chip>
             </mat-chip-set>
+            <div class="flex flex-row items-end justify-end gap-2 my-1">
+              <button class="text-orange-500 btn-edit" mat-icon-button (click)="edit.emit()">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button class="text-red-500 btn-delete" mat-icon-button (click)="remove.emit()">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -67,7 +76,17 @@ import { MatChipsModule } from '@angular/material/chips';
       </mat-card-content>
     </mat-card>
   `,
+  styles: `
+    .btn-edit {
+      color: oklch(70.5% 0.213 47.604);
+    }
+    .btn-delete {
+      color: #fb2c36;
+    }
+  `,
 })
 export class RecordComponent {
   record = input.required<Record>();
+  remove = output<void>();
+  edit = output<void>();
 }
