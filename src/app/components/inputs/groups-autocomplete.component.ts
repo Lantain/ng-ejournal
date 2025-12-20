@@ -1,9 +1,10 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal, forwardRef, effect } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { map, take } from 'rxjs/operators';
-import { GroupService } from '../services/group.service';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Group } from '../model';
+
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
@@ -12,6 +13,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { AsyncPipe } from '@angular/common';
+import { GroupService } from '../../services/group.service';
+import { Group } from '../../model';
 
 @Component({
   imports: [
@@ -23,6 +26,13 @@ import { AsyncPipe } from '@angular/common';
     AsyncPipe,
   ],
   selector: 'app-groups-input',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => GroupsInputComponent),
+      multi: true,
+    },
+  ],
   template: `
     @if (groups$ | async; as groups) {
 
@@ -33,7 +43,7 @@ import { AsyncPipe } from '@angular/common';
           @for (group of selectedGroups(); track $index) {
           <mat-chip-row (removed)="remove(group)">
             {{ group.name }}
-            <button matChipRemove>
+            <button matChipRemove [disabled]="disabled">
               <mat-icon>cancel</mat-icon>
             </button>
           </mat-chip-row>
@@ -49,6 +59,7 @@ import { AsyncPipe } from '@angular/common';
           [matChipInputFor]="chipGrid"
           [matAutocomplete]="auto"
           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+          [disabled]="disabled"
         />
         <mat-autocomplete
           #auto="matAutocomplete"
@@ -63,9 +74,7 @@ import { AsyncPipe } from '@angular/common';
     }
   `,
 })
-export class GroupsInputComponent {
-  constructor() {}
-
+export class GroupsInputComponent implements ControlValueAccessor {
   public facultyId = input<number | null>();
   public formId = input<number | null>();
   public courseId = input<number | null>();
@@ -75,8 +84,22 @@ export class GroupsInputComponent {
   selectedGroups = signal<Group[]>([]);
   groupIds = output<number[]>();
   filterText = signal('');
+  disabled = false;
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
+
+  // ControlValueAccessor callbacks
+  private onChange: (value: number[]) => void = () => {};
+  private onTouched: () => void = () => {};
+
+  constructor() {
+    // Emit changes through both output and ControlValueAccessor
+    effect(() => {
+      const ids = this.selectedGroups().map((g) => g.id);
+      this.onChange(ids);
+      this.groupIds.emit(ids);
+    });
+  }
 
   groups$ = combineLatest([
     this.groupService.getGroups(),
@@ -91,8 +114,8 @@ export class GroupsInputComponent {
           const facultyMatch = !facultyId || group.faculty_id === facultyId;
           const courseMatch = !courseId || group.course_id === courseId;
           const formMatch = !formId || group.form_id === formId;
-
-          return facultyMatch && courseMatch && formMatch;
+          const notSelected = !this.selectedGroups().some((g) => g.id === group.id);
+          return facultyMatch && courseMatch && formMatch && notSelected;
         })
         .filter((group: Group) => {
           if (filterText.length === 0) {
@@ -103,6 +126,35 @@ export class GroupsInputComponent {
     })
   );
 
+  // ControlValueAccessor implementation
+  writeValue(groupIds: number[]): void {
+    if (!groupIds || groupIds.length === 0) {
+      this.selectedGroups.set([]);
+      return;
+    }
+
+    // Fetch all groups and find the ones matching the IDs
+    this.groupService
+      .getGroups()
+      .pipe(take(1))
+      .subscribe((allGroups) => {
+        const selected = allGroups.filter((g: Group) => groupIds.includes(g.id));
+        this.selectedGroups.set(selected);
+      });
+  }
+
+  registerOnChange(fn: (value: number[]) => void): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+
   remove(group: Group): void {
     this.selectedGroups.update((groups) => {
       const index = groups.indexOf(group);
@@ -110,9 +162,9 @@ export class GroupsInputComponent {
         return groups;
       }
       groups.splice(index, 1);
-      this.groupIds.emit(groups.map((g) => g.id));
       return [...groups]; // Return new reference
     });
+    this.onTouched();
   }
 
   selected(event: MatAutocompleteSelectedEvent): void {
@@ -121,27 +173,12 @@ export class GroupsInputComponent {
       const group = groups.find((g: Group) => g.id === groupId);
       if (group) {
         this.selectedGroups.update((groups) => {
-          const newGroups = [...groups, group];
-          this.groupIds.emit(newGroups.map((g) => g.id));
-          return newGroups;
+          return [...groups, group];
         });
       }
     });
     this.filterText.set('');
     event.option.deselect();
+    this.onTouched();
   }
-
-  // add(event: MatChipInputEvent): void {
-  //   console.log('add', event);
-
-  //   const value = (event.value || '').trim();
-
-  //   if (value) {
-  //     this.groupIds.update((groupIds) => {
-  //       return [...groupIds, Number(value)];
-  //     });
-  //   }
-
-  //   this.filterText.set('');
-  // }
 }

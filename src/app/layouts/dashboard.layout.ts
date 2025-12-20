@@ -24,12 +24,18 @@ import { MatMenuModule } from '@angular/material/menu';
     <div class="h-screen w-screen bg-gray-100">
       <mat-toolbar>
         <div class="flex flex-row items-start pr-4 gap-2">
-          @for (link of links; track link.link) {
-          <button matButton extended [routerLink]="link.link">
-            <mat-icon>{{ link.icon }}</mat-icon>
-            {{ link.label }}
+          <button matButton extended [routerLink]="'disciplines'">
+            <mat-icon>workspaces</mat-icon>
+            Дисципліни
           </button>
-          }
+          <button matButton extended [routerLink]="'themes'">
+            <mat-icon>bookmarks</mat-icon>
+            Теми
+          </button>
+          <button matButton extended [routerLink]="'records'">
+            <mat-icon>event_note</mat-icon>
+            Записи
+          </button>
         </div>
         <span style="flex: 1 1 auto;"></span>
         <div class="flex flex-col items-end pr-4">
@@ -63,19 +69,12 @@ export class DashboardLayout {
   }
 
   get department() {
-    const user = this.authService.getUser();
-    const departments = user?.departments;
+    const departments = this.user?.departments;
     if (departments) {
       const ds = Array.isArray(departments) ? departments : [departments];
-      return ds.length ? ds[0] : null;
+      return ds.length ? ds.at(0) : null;
     } else {
       return null;
     }
   }
-
-  links = [
-    { label: 'Дисципліни', link: 'courses', icon: 'workspaces' },
-    { label: 'Теми', link: 'themes', icon: 'bookmarks' },
-    { label: 'Записи', link: 'records', icon: 'event_note' },
-  ];
 }

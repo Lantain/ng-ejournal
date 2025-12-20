@@ -19,7 +19,7 @@ export interface Semester {
   name: string;
 }
 
-export interface DisciplineKind {
+export interface LessonKind {
   id: number;
   name: string;
 }
@@ -37,7 +37,7 @@ export interface Record {
   group_faculty: string;
   course_id: number;
   form_id: number;
-  group: string;
+  group: string; // for custom group input
   is_custom_group: boolean;
   created_at: string;
   updated_at: string;
@@ -48,7 +48,7 @@ export interface Record {
   users?: User;
   disciplines?: Discipline;
   topics?: Topic;
-  discipline_kinds?: DisciplineKind;
+  discipline_kinds?: LessonKind;
   courses?: Course;
   forms?: LearningForm;
 }

@@ -1,6 +1,6 @@
-import { DisciplineKind } from '../model';
+import { LessonKind } from '../model';
 
-export const disciplineKinds: DisciplineKind[] = [
+export const lessonKinds: LessonKind[] = [
   {
     name: 'Лекція',
     id: 1,

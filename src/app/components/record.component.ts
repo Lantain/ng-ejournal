@@ -33,8 +33,10 @@ import { MatButtonModule } from '@angular/material/button';
               <mat-chip class="flex flex-row items-center justify-center">
                 <div class="flex flex-row items-center">
                   <mat-icon>group</mat-icon>
-                  <span class="inline-block ml-2">{{
-                    record().group_name.split(',').join(', ')
+                  <span [class.italic]="record().is_custom_group" class="inline-block ml-2">{{
+                    record().is_custom_group
+                      ? record().group
+                      : record().group_name.split(',').join(', ')
                   }}</span>
                 </div>
               </mat-chip>
@@ -60,10 +62,10 @@ import { MatButtonModule } from '@angular/material/button';
               </mat-chip>
             </mat-chip-set>
             <div class="flex flex-row items-end justify-end gap-2 my-1">
-              <button class="text-orange-500 btn-edit" mat-icon-button (click)="edit.emit()">
+              <button mat-icon-button (click)="edit.emit()">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button class="text-red-500 btn-delete" mat-icon-button (click)="remove.emit()">
+              <button mat-icon-button (click)="remove.emit()">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>

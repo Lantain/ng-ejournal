@@ -37,14 +37,17 @@ export class TopicService {
   }
 
   update(topic: Partial<Topic>) {
+    this.clearTopicsCache();
     return this.http.patch(API_URL + '/topic/' + topic.id, topic, { headers: API_HEADERS });
   }
 
   create(topic: Partial<Topic>) {
+    this.clearTopicsCache();
     return this.http.post(API_URL + '/topic', topic, { headers: API_HEADERS });
   }
 
   delete(id: number) {
+    this.clearTopicsCache();
     return this.http.delete(API_URL + '/topic/' + id, { headers: API_HEADERS });
   }
 }

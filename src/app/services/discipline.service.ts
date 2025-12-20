@@ -4,6 +4,12 @@ import { map, Observable, of, tap } from 'rxjs';
 import { API_HEADERS, API_URL } from '../app.config';
 import { ApiResponse, Discipline } from '../model';
 
+interface EditDisciplineRequest {
+  name: string;
+  department_id: string;
+  semester_id: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -39,18 +45,22 @@ export class DisciplineService {
   }
 
   create(value: any): Observable<any> {
+    this.clearDisciplinesCache();
     return this.http.post(API_URL + '/discipline', value, { headers: API_HEADERS });
   }
 
-  update(id: number, value: any): Observable<any> {
+  update(id: number, value: EditDisciplineRequest): Observable<any> {
+    this.clearDisciplinesCache();
     return this.http.patch(API_URL + '/discipline/' + id, value, { headers: API_HEADERS });
   }
 
   detachBind(value: any): Observable<any> {
+    this.clearDisciplinesCache();
     return this.http.post(API_URL + '/discipline/detach', value, { headers: API_HEADERS });
   }
 
   attachBind(value: any): Observable<any> {
+    this.clearDisciplinesCache();
     return this.http.post(API_URL + '/discipline/attach', value, { headers: API_HEADERS });
   }
 }

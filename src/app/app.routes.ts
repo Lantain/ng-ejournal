@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { LoginPage } from './components/login.page';
-import { CoursesPage } from './components/courses.page';
-import { DashboardLayout } from './components/dashboard.layout';
-import { ThemesPage } from './components/themes.page';
-import { RecordsPage } from './components/records.page';
+import { LoginPage } from './pages/login.page';
+import { DisciplinesPage } from './pages/disciplines.page';
+import { DashboardLayout } from './layouts/dashboard.layout';
+import { ThemesPage } from './pages/themes.page';
+import { RecordsPage } from './pages/records.page';
 
 export const routes: Routes = [
   {
@@ -12,12 +12,12 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'courses',
+        redirectTo: 'disciplines',
         pathMatch: 'full',
       },
       {
-        path: 'courses',
-        component: CoursesPage,
+        path: 'disciplines',
+        component: DisciplinesPage,
       },
       {
         path: 'themes',

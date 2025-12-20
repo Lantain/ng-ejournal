@@ -27,6 +27,19 @@ interface DisciplineGroup {
   imports: [MatListModule, MatDividerModule, DecimalPipe],
   template: `
     <div class="container max-w-4xl mx-auto p-4">
+      <p class="my-2 text-lg">
+        Сума годин: <span class="font-bold">{{ totalHours() }}</span>
+      </p>
+      <div class="flex flex-row gap-8 mb-4">
+        <p class="text-sm text-gray-600">
+          Денна форма: <span class="font-bold text-gray-900">{{ dayTotalHours() }} год.</span>
+        </p>
+        <p class="text-sm text-gray-600">
+          Заочна форма:
+          <span class="font-bold text-gray-900">{{ correspondenceTotalHours() }} год.</span>
+        </p>
+      </div>
+
       <mat-list>
         @for (discipline of reportData(); track discipline.name) {
         <div class="mb-4 border rounded-lg overflow-hidden">
@@ -71,6 +84,25 @@ interface DisciplineGroup {
 })
 export class ReportsComponent {
   records = input.required<Record[]>();
+
+  totalHours = computed(() => {
+    const records = this.records();
+    return records.reduce((total, record) => total + Number(record.hour), 0);
+  });
+
+  dayTotalHours = computed(() => {
+    const records = this.records();
+    return records
+      .filter((r) => r.form_id === 1)
+      .reduce((total, record) => total + Number(record.hour), 0);
+  });
+
+  correspondenceTotalHours = computed(() => {
+    const records = this.records();
+    return records
+      .filter((r) => r.form_id === 2)
+      .reduce((total, record) => total + Number(record.hour), 0);
+  });
 
   reportData = computed<DisciplineGroup[]>(() => {
     const records = this.records();

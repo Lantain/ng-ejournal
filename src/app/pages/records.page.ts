@@ -5,12 +5,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { RecordService } from '../services/record.service';
 import { AuthService } from '../services/auth.service';
-import { AddRecordsComponent } from './add-records.component';
+import { AddRecordsComponent } from '../components/add-records.component';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
-import { RecordComponent } from './record.component';
-import { RecordsListComponent } from './records-list.component';
-import { ReportsComponent } from './reports.component';
+import { RecordsListComponent } from '../components/records-list.component';
+import { ReportsComponent } from '../components/reports.component';
 import { BehaviorSubject, switchMap } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   imports: [
@@ -54,7 +54,7 @@ export class RecordsPage {
   private recordService = inject(RecordService);
   private authService = inject(AuthService);
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
-
+  private snackBar = inject(MatSnackBar);
   records$ = this.refreshTrigger$.pipe(
     switchMap(() => this.recordService.getByUserId(this.authService.getUser()!.id))
   );
@@ -64,6 +64,14 @@ export class RecordsPage {
   }
 
   removeRecord(id: number) {
-    this.recordService.delete(id).subscribe(() => this.refreshRecords());
+    if (!confirm('Видалити запис?')) {
+      return;
+    }
+    this.recordService.delete(id).subscribe(() => {
+      this.snackBar.open('Запис видалений успішно', 'Закрити', {
+        duration: 4000,
+      });
+      this.refreshRecords();
+    });
   }
 }
