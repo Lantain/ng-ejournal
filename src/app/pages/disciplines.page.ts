@@ -136,10 +136,12 @@ export class DisciplinesPage {
     });
     dialogRef.afterClosed().subscribe((result) => {
       if (result !== undefined) {
-        this.disciplineService.create(result).subscribe((res) => {
-          console.log('Discipline created:', res);
-          this.refreshDisciplines();
-        });
+        this.disciplineService
+          .create({ ...result, user_id: this.authService.getUser()!.id })
+          .subscribe((res) => {
+            console.log('Discipline created:', res);
+            this.refreshDisciplines();
+          });
       }
     });
   }

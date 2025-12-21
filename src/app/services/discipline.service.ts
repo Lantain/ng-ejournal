@@ -35,9 +35,7 @@ export class DisciplineService {
       return of(disciplines);
     }
     return this.http
-      .get<ApiResponse<'disciplines', Discipline[]>>(API_URL + '/discipline/' + id, {
-        headers: API_HEADERS,
-      })
+      .get<ApiResponse<'disciplines', Discipline[]>>(API_URL + '/discipline/' + id)
       .pipe(
         map((res) => res.disciplines),
         tap((res) => this.storeDisciplines(res))
@@ -46,21 +44,21 @@ export class DisciplineService {
 
   create(value: any): Observable<any> {
     this.clearDisciplinesCache();
-    return this.http.post(API_URL + '/discipline', value, { headers: API_HEADERS });
+    return this.http.post(API_URL + '/discipline', value);
   }
 
   update(id: number, value: EditDisciplineRequest): Observable<any> {
     this.clearDisciplinesCache();
-    return this.http.patch(API_URL + '/discipline/' + id, value, { headers: API_HEADERS });
+    return this.http.patch(API_URL + '/discipline/' + id, value);
   }
 
   detachBind(value: any): Observable<any> {
     this.clearDisciplinesCache();
-    return this.http.post(API_URL + '/discipline/detach', value, { headers: API_HEADERS });
+    return this.http.post(API_URL + '/discipline/detach', value);
   }
 
   attachBind(value: any): Observable<any> {
     this.clearDisciplinesCache();
-    return this.http.post(API_URL + '/discipline/attach', value, { headers: API_HEADERS });
+    return this.http.post(API_URL + '/discipline/attach', value);
   }
 }

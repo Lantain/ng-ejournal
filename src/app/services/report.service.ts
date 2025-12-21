@@ -9,7 +9,6 @@ export class ReportService {
 
   getReports(data: any): Observable<any> {
     return this.http.get(API_URL + '/report', {
-      headers: API_HEADERS,
       params: data,
       responseType: 'blob',
     });
@@ -17,7 +16,6 @@ export class ReportService {
 
   getReportByUser(value: any): Observable<any> {
     return this.http.get(API_URL + '/report/user', {
-      headers: API_HEADERS,
       params: value,
       responseType: 'blob' as 'json',
     });
@@ -25,7 +23,6 @@ export class ReportService {
 
   getReportByDepartment(value: any): Observable<any> {
     return this.http.get(API_URL + '/report/department', {
-      headers: API_HEADERS,
       params: value,
       responseType: 'blob' as 'json',
     });

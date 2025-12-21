@@ -4,6 +4,8 @@ import { MatCardModule } from '@angular/material/card';
 import { RecordComponent } from './record.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import moment from 'moment';
+import 'moment/locale/uk';
 
 @Component({
   imports: [MatCardModule, RecordComponent, MatFormFieldModule, MatSelectModule],
@@ -55,12 +57,16 @@ import { MatSelectModule } from '@angular/material/select';
     </div>
 
     @for(group of groupedRecords(); track group.date) {
-    <mat-card appearance="outlined" class="mt-4">
+    <mat-card appearance="outlined" class="mt-4 w-6xl mx-auto">
       <mat-card-header>
-        <mat-card-title
-          >{{ group.date }} - {{ group.records.length }}
-          {{ group.records.length === 1 ? 'запис' : 'записів' }}</mat-card-title
-        >
+        <mat-card-title>{{ formatDate(group.date) }} </mat-card-title>
+        <mat-card-subtitle>
+          <span class="inline-block mr-2">
+            {{ group.records.length }}
+            {{ group.records.length === 1 ? 'запис' : 'записів' }}
+          </span>
+          <span> {{ getTotalHours(group.records) }} год. </span>
+        </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         @for(record of group.records; track record.id) {
@@ -69,6 +75,7 @@ import { MatSelectModule } from '@angular/material/select';
       </mat-card-content>
     </mat-card>
     }
+    <div class="pb-8"></div>
   `,
 })
 export class RecordsListComponent {
@@ -170,6 +177,14 @@ export class RecordsListComponent {
     }));
     return recordGroups;
   });
+
+  getTotalHours(records: Record[] = []) {
+    return records.reduce((total, record) => total + Number(record.hour), 0);
+  }
+
+  formatDate(date: string) {
+    return moment(date).locale('uk').format('dddd DD.MM.YYYY');
+  }
 
   removeRecord(record: Record) {
     this.onRemoveRecord.emit(record.id);

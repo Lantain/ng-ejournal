@@ -25,13 +25,9 @@ export class GroupService {
     if (groups.length > 0) {
       return of(groups);
     }
-    return this.http
-      .get<ApiResponse<'groups', Group[]>>(API_URL + '/group', {
-        headers: API_HEADERS,
-      })
-      .pipe(
-        map((res) => res.groups),
-        tap((groups) => this.storeGroups(groups))
-      );
+    return this.http.get<ApiResponse<'groups', Group[]>>(API_URL + '/group').pipe(
+      map((res) => res.groups),
+      tap((groups) => this.storeGroups(groups))
+    );
   }
 }

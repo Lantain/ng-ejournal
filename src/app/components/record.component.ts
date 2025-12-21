@@ -20,6 +20,15 @@ import { MatButtonModule } from '@angular/material/button';
             <mat-chip-set class="mt-2.5">
               <mat-chip>
                 <div class="flex flex-row items-center">
+                  <mat-icon>alarm</mat-icon>
+                  <span class="inline-block ml-2">
+                    @if(record().hour == 1) {
+                    {{ record().hour }} година } @else { {{ record().hour }} години }
+                  </span>
+                </div>
+              </mat-chip>
+              <mat-chip>
+                <div class="flex flex-row items-center">
                   <mat-icon>school</mat-icon>
                   <span class="inline-block ml-2">{{ record().forms?.name }}</span>
                 </div>
@@ -50,21 +59,11 @@ import { MatButtonModule } from '@angular/material/button';
                   <span class="inline-block ml-2">{{ record().date }}</span>
                 </div>
               </mat-chip>
-              <br />
-              <mat-chip>
-                <div class="flex flex-row items-center">
-                  <mat-icon>alarm</mat-icon>
-                  <span class="inline-block ml-2">
-                    @if(record().hour == 1) {
-                    {{ record().hour }} година } @else { {{ record().hour }} години }
-                  </span>
-                </div>
-              </mat-chip>
             </mat-chip-set>
             <div class="flex flex-row items-end justify-end gap-2 my-1">
-              <button mat-icon-button (click)="edit.emit()">
+              <!-- <button mat-icon-button (click)="edit.emit()">
                 <mat-icon>edit</mat-icon>
-              </button>
+              </button> -->
               <button mat-icon-button (click)="remove.emit()">
                 <mat-icon>delete</mat-icon>
               </button>

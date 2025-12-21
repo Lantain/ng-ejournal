@@ -7,6 +7,7 @@ import { DecimalPipe } from '@angular/common';
 interface KindGroup {
   name: string;
   hours: number;
+  id: number;
 }
 
 interface FormGroup {
@@ -24,11 +25,11 @@ interface DisciplineGroup {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [MatListModule, MatDividerModule, DecimalPipe],
+  imports: [MatListModule, MatDividerModule],
   template: `
-    <div class="container max-w-4xl mx-auto p-4">
+    <div class="relative container max-w-3xl mx-auto h-full">
       <p class="my-2 text-lg">
-        Сума годин: <span class="font-bold">{{ totalHours() }}</span>
+        Сума годин: <span class="font-bold">{{ totalHours() }} год.</span>
       </p>
       <div class="flex flex-row gap-8 mb-4">
         <p class="text-sm text-gray-600">
@@ -40,38 +41,38 @@ interface DisciplineGroup {
         </p>
       </div>
 
-      <mat-list>
+      <div class="relative w-full">
         @for (discipline of reportData(); track discipline.name) {
-        <div class="mb-4 border rounded-lg overflow-hidden">
-          <div class="bg-gray-100 p-3 font-bold flex justify-between items-center">
+        <div class="relative block mb-4 border rounded-lg overflow-hidden w-full">
+          <div class="bg-gray-200 p-3 font-bold flex justify-between items-center">
             <span>{{ discipline.name }}</span>
-            <span>{{ discipline.hours | number : '1.0-2' }} год.</span>
+            <span>{{ discipline.hours }} год.</span>
           </div>
 
           @for (form of discipline.forms; track form.name) {
-          <div class="pl-4 pr-3 py-2 border-t flex flex-col">
+          <div class="px-4 py-2 border-t flex flex-col w-full">
             <div class="flex justify-between items-center font-semibold text-gray-700">
               <span>{{ form.name }}</span>
-              <span>{{ form.hours | number : '1.0-2' }} год.</span>
+              <span>{{ form.hours }} год.</span>
             </div>
 
-            <mat-list class="pt-0! pb-0!">
+            <div class="px-6 my-2 w-full">
               @for (kind of form.kinds; track kind.name) {
-              <mat-list-item class="h-auto! py-1!">
+              <div class="py-1 w-full">
                 <div class="flex justify-between w-full text-sm text-gray-600">
                   <span>{{ kind.name }}</span>
-                  <span>{{ kind.hours | number : '1.0-2' }} год.</span>
+                  <span>{{ kind.hours }} год.</span>
                 </div>
-              </mat-list-item>
+              </div>
               }
-            </mat-list>
+            </div>
           </div>
           }
         </div>
         } @empty {
         <div class="p-4 text-center text-gray-500">Записів не знайдено</div>
         }
-      </mat-list>
+      </div>
     </div>
   `,
   styles: [
@@ -134,7 +135,7 @@ export class ReportsComponent {
       // 3. Get or create Kind Group within Form
       let kindGroup = formGroup.kinds.find((k) => k.name === kindName);
       if (!kindGroup) {
-        kindGroup = { name: kindName, hours: 0 };
+        kindGroup = { name: kindName, hours: 0, id: record.discipline_kinds?.id! };
         formGroup.kinds.push(kindGroup);
       }
       kindGroup.hours += hours;
@@ -147,7 +148,7 @@ export class ReportsComponent {
     result.forEach((d) => {
       d.forms.sort((a, b) => a.name.localeCompare(b.name));
       d.forms.forEach((f) => {
-        f.kinds.sort((a, b) => a.name.localeCompare(b.name));
+        f.kinds.sort((a, b) => a.id - b.id); //a.name.localeCompare(b.name));
       });
     });
 

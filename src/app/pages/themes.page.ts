@@ -112,9 +112,11 @@ export class ThemesPage {
     });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.themeService.create(result).subscribe(() => {
-          this.refreshThemes();
-        });
+        this.themeService
+          .create({ ...result, user_id: this.authService.getUser()!.id })
+          .subscribe(() => {
+            this.refreshThemes();
+          });
       }
     });
   }

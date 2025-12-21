@@ -26,24 +26,20 @@ export class TopicService {
     if (topics.length > 0) {
       return of(topics);
     }
-    return this.http
-      .get<ApiResponse<'topics', Topic[]>>(API_URL + '/topic/' + userId, {
-        headers: API_HEADERS,
-      })
-      .pipe(
-        map((res) => res.topics),
-        tap((topics) => this.storeTopics(topics))
-      );
+    return this.http.get<ApiResponse<'topics', Topic[]>>(API_URL + '/topic/' + userId).pipe(
+      map((res) => res.topics),
+      tap((topics) => this.storeTopics(topics))
+    );
   }
 
   update(topic: Partial<Topic>) {
     this.clearTopicsCache();
-    return this.http.patch(API_URL + '/topic/' + topic.id, topic, { headers: API_HEADERS });
+    return this.http.patch(API_URL + '/topic/' + topic.id, topic);
   }
 
   create(topic: Partial<Topic>) {
     this.clearTopicsCache();
-    return this.http.post(API_URL + '/topic', topic, { headers: API_HEADERS });
+    return this.http.post(API_URL + '/topic', topic);
   }
 
   delete(id: number) {

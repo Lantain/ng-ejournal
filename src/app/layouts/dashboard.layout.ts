@@ -21,7 +21,7 @@ import { MatMenuModule } from '@angular/material/menu';
   ],
   providers: [AuthService],
   template: `
-    <div class="h-screen w-screen bg-gray-100">
+    <div class="h-full w-full">
       <mat-toolbar>
         <div class="flex flex-row items-start pr-4 gap-2">
           <button matButton extended [routerLink]="'disciplines'">

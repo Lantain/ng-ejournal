@@ -68,7 +68,7 @@ export class AddRecordsComponent {
   );
 
   onFormSubmit(payload: AddRecordRequest) {
-    this.recordService.create(payload as any).subscribe({
+    this.recordService.create(payload).subscribe({
       next: (response) => {
         console.log('Record created successfully', response);
         this.snackBar.open('Запис створений успішно', 'Закрити', {
@@ -78,6 +78,9 @@ export class AddRecordsComponent {
       },
       error: (err) => {
         console.error('Error creating record', err);
+        this.snackBar.open(err.error.message, 'Закрити', {
+          duration: 4000,
+        });
       },
     });
   }

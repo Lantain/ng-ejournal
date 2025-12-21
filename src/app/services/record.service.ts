@@ -54,24 +54,21 @@ export class RecordService {
   }
 
   getById(recordId: number) {
-    return this.http.get<ApiResponse<'record', Record>>(API_URL + '/record/elem/' + recordId, {
-      headers: API_HEADERS,
-    });
+    return this.http.get<ApiResponse<'record', Record>>(API_URL + '/record/elem/' + recordId);
   }
 
   create(value: AddRecordRequest) {
-    console.log(value);
-    return of(null);
-    // return this.http.post<ApiResponse<'record', AddRecordResponse>>(API_URL + '/record', value, {
-    //   headers: API_HEADERS,
-    // });
+    return this.http.post<ApiResponse<'record', AddRecordResponse>>(API_URL + '/record', value);
   }
 
   update(value: any, recordId: number) {
-    return this.http.patch(API_URL + '/record/' + recordId, value, { headers: API_HEADERS });
+    return this.http.patch<ApiResponse<'record', AddRecordResponse>>(
+      API_URL + '/record/' + recordId,
+      value
+    );
   }
 
   delete(recordId: number) {
-    return this.http.delete(API_URL + '/record/' + recordId, { headers: API_HEADERS });
+    return this.http.delete(API_URL + '/record/' + recordId);
   }
 }

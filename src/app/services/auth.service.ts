@@ -55,7 +55,7 @@ export class AuthService {
 
   me() {
     return this.http
-      .get<User[]>(API_URL + '/auth/user-profile', { headers: API_HEADERS })
+      .get<User[]>(API_URL + '/auth/user-profile')
       .pipe(map((res) => (res.length ? res[0] : null)));
   }
 
