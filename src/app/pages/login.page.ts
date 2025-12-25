@@ -16,25 +16,33 @@ import { Field, form } from '@angular/forms/signals';
       <form class="flex flex-col gap-2 p-8" (ngSubmit)="onSubmit()">
         <mat-card class="p-4 min-w-[400px]" appearance="outlined">
           <mat-card-header>
-            <mat-card-title class="pb-6">Login</mat-card-title>
+            <mat-card-title class="pb-6">Вхід в електронний журнал</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <div class="flex flex-col gap-2">
               <mat-form-field>
-                <mat-label>Username</mat-label>
+                <mat-label>Логін</mat-label>
                 <input matInput [field]="loginForm.username" />
               </mat-form-field>
               <mat-form-field>
-                <mat-label>Password</mat-label>
+                <mat-label>Пароль</mat-label>
                 <input matInput [field]="loginForm.password" type="password" />
               </mat-form-field>
             </div>
           </mat-card-content>
-          <mat-card-actions class="flex justify-center">
-            <button [disabled]="isLoading()" type="submit" class="w-full mt-4" matButton="filled">
-              Submit
-            </button>
-            <div class="text-red-500">{{ error() }}</div>
+          <mat-card-actions>
+            <div class="w-full">
+              <div class="text-red-500 text-center">{{ error() }}</div>
+
+              <button
+                [disabled]="!loginForm.username() || !loginForm.password() || isLoading()"
+                type="submit"
+                class="w-full mt-4"
+                matButton="filled"
+              >
+                {{ isLoading() ? 'Відправка...' : 'Вхід' }}
+              </button>
+            </div>
           </mat-card-actions>
         </mat-card>
       </form>
@@ -73,8 +81,10 @@ export class LoginPage {
         }
       },
       error: (err) => {
-        this.error.set(err.error?.message || err.error || err || 'Something went wrong');
+        console.log('err', err);
+        this.error.set('Невірний логін або пароль');
         this.authService.flushCredentials();
+        this.isLoading.set(false);
       },
       complete: () => {
         this.isLoading.set(false);
