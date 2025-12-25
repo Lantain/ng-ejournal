@@ -1,14 +1,20 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, signal, inject } from '@angular/core';
+import { SemesterService } from '../services/semester.service';
 import { Record } from '../model';
 import { MatCardModule } from '@angular/material/card';
 import { RecordComponent } from './record.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { RecordsStateService } from '../services/records-state.service';
+import { RecordService } from '../services/record.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { MatOptionModule } from '@angular/material/core';
 import moment from 'moment';
 import 'moment/locale/uk';
 
 @Component({
-  imports: [MatCardModule, RecordComponent, MatFormFieldModule, MatSelectModule],
+  imports: [MatCardModule, RecordComponent, MatFormFieldModule, MatSelectModule, MatOptionModule],
   selector: 'app-records-list',
   template: `
     <div class="flex flex-row gap-4 my-8 justify-center container">
@@ -70,22 +76,33 @@ import 'moment/locale/uk';
       </mat-card-header>
       <mat-card-content>
         @for(record of group.records; track record.id) {
-        <app-record (remove)="removeRecord(record)" [record]="record"></app-record>
+        <app-record
+          (remove)="removeRecord(record)"
+          (edit)="onEditRecord(record)"
+          [record]="record"
+        ></app-record>
         }
       </mat-card-content>
     </mat-card>
+    }@empty {
+    <div class="p-4 text-center text-gray-500">Записів не знайдено</div>
     }
     <div class="pb-8"></div>
   `,
 })
 export class RecordsListComponent {
-  records = input.required<Record[]>();
+  private recordsState = inject(RecordsStateService);
+  records = this.recordsState.records;
 
   selectedDiscipline = signal<number | null>(null);
   selectedForm = signal<number | null>(null);
   selectedCourse = signal<number | null>(null);
   selectedGroup = signal<string | null>(null);
-  onRemoveRecord = output<number>();
+
+  private semesterService = inject(SemesterService);
+  private recordService = inject(RecordService);
+  private snackBar = inject(MatSnackBar);
+  private router = inject(Router);
 
   uniqueDisciplines = computed(() => {
     const disciplines = new Map<number, { id: number; name: string }>();
@@ -159,6 +176,11 @@ export class RecordsListComponent {
       });
     }
 
+    const currentSemester = this.semesterService.semester();
+    if (currentSemester) {
+      records = records.filter((r) => Number(r.semester) === currentSemester);
+    }
+
     return records;
   });
 
@@ -186,7 +208,19 @@ export class RecordsListComponent {
     return moment(date).locale('uk').format('dddd DD.MM.YYYY');
   }
 
+  onEditRecord(record: Record) {
+    this.router.navigate(['dashboard', 'records', 'edit', record.id]);
+  }
+
   removeRecord(record: Record) {
-    this.onRemoveRecord.emit(record.id);
+    if (!confirm('Видалити запис?')) {
+      return;
+    }
+    this.recordService.delete(record.id).subscribe(() => {
+      this.snackBar.open('Запис видалений успішно', 'Закрити', {
+        duration: 4000,
+      });
+      this.recordsState.refresh();
+    });
   }
 }

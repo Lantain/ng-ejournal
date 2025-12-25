@@ -11,7 +11,9 @@ interface SigningResponse {
   user: User;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class AuthService {
   constructor(private http: HttpClient) {}
 

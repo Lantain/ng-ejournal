@@ -117,7 +117,11 @@ export class DisciplinesPage {
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
   disciplines$ = this.refreshTrigger$.pipe(
-    switchMap(() => this.disciplineService.getDisciplinesByUserId(this.authService.getUser()!.id))
+    switchMap(() => {
+      const user = this.authService.getUser();
+      if (!user) return [];
+      return this.disciplineService.getDisciplinesByUserId(user.id);
+    })
   );
 
   filtereddisciplines$ = combineLatest([

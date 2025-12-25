@@ -1,8 +1,13 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Record } from '../model';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
-import { DecimalPipe } from '@angular/common';
+import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import { MatButtonModule } from '@angular/material/button';
+import { BottomExportsComponent } from './dialogs/bottom-exports.component';
+import { SemesterService } from '../services/semester.service';
+import { RecordsStateService } from '../services/records-state.service';
+import { MatIconModule } from '@angular/material/icon';
 
 interface KindGroup {
   name: string;
@@ -25,20 +30,29 @@ interface DisciplineGroup {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [MatListModule, MatDividerModule],
+  imports: [MatListModule, MatDividerModule, MatBottomSheetModule, MatButtonModule, MatIconModule],
   template: `
-    <div class="relative container max-w-3xl mx-auto h-full">
-      <p class="my-2 text-lg">
-        Сума годин: <span class="font-bold">{{ totalHours() }} год.</span>
-      </p>
-      <div class="flex flex-row gap-8 mb-4">
-        <p class="text-sm text-gray-600">
-          Денна форма: <span class="font-bold text-gray-900">{{ dayTotalHours() }} год.</span>
-        </p>
-        <p class="text-sm text-gray-600">
-          Заочна форма:
-          <span class="font-bold text-gray-900">{{ correspondenceTotalHours() }} год.</span>
-        </p>
+    <div class="relative container max-w-3xl mx-auto h-full mt-4">
+      <div class="flex flex-row justify-between items-center">
+        <div>
+          <p class="my-2 text-lg">
+            Сума годин: <span class="font-bold">{{ totalHours() }} год.</span>
+          </p>
+          <div class="flex flex-row gap-8 mb-4">
+            <p class="text-sm text-gray-600">
+              Денна форма: <span class="font-bold text-gray-900">{{ dayTotalHours() }} год.</span>
+            </p>
+            <p class="text-sm text-gray-600">
+              Заочна форма:
+              <span class="font-bold text-gray-900">{{ correspondenceTotalHours() }} год.</span>
+            </p>
+          </div>
+        </div>
+        @if (filteredRecords().length > 0) {
+        <button mat-button="extended" (click)="openBottomSheet()">
+          <mat-icon>download</mat-icon> Експорт
+        </button>
+        }
       </div>
 
       <div class="relative w-full">
@@ -84,39 +98,46 @@ interface DisciplineGroup {
   ],
 })
 export class ReportsComponent {
-  records = input.required<Record[]>();
+  private recordsState = inject(RecordsStateService);
+  records = this.recordsState.records;
+
+  private bottomSheet = inject(MatBottomSheet);
+  private semesterService = inject(SemesterService);
+
+  filteredRecords = computed(() => {
+    const semester = this.semesterService.semester();
+    return this.records().filter((r) => Number(r.semester) === semester);
+  });
 
   totalHours = computed(() => {
-    const records = this.records();
+    const records = this.filteredRecords();
     return records.reduce((total, record) => total + Number(record.hour), 0);
   });
 
   dayTotalHours = computed(() => {
-    const records = this.records();
+    const records = this.filteredRecords();
     return records
       .filter((r) => r.form_id === 1)
       .reduce((total, record) => total + Number(record.hour), 0);
   });
 
   correspondenceTotalHours = computed(() => {
-    const records = this.records();
+    const records = this.filteredRecords();
     return records
       .filter((r) => r.form_id === 2)
       .reduce((total, record) => total + Number(record.hour), 0);
   });
 
   reportData = computed<DisciplineGroup[]>(() => {
-    const records = this.records();
+    const records = this.filteredRecords();
     const disciplinesMap = new Map<string, DisciplineGroup>();
 
     for (const record of records) {
-      // Get names, defaulting to Unknown if missing
       const disciplineName = record.disciplines?.name || 'Невідома дисципліна';
       const formName = record.forms?.name || 'Невідома форма';
       const kindName = record.discipline_kinds?.name || 'Невідомий тип';
       const hours = Number(record.hour) || 0;
 
-      // 1. Get or create Discipline Group
       let disciplineGroup = disciplinesMap.get(disciplineName);
       if (!disciplineGroup) {
         disciplineGroup = { name: disciplineName, hours: 0, forms: [] };
@@ -124,7 +145,6 @@ export class ReportsComponent {
       }
       disciplineGroup.hours += hours;
 
-      // 2. Get or create Form Group within Discipline
       let formGroup = disciplineGroup.forms.find((f) => f.name === formName);
       if (!formGroup) {
         formGroup = { name: formName, hours: 0, kinds: [] };
@@ -132,7 +152,6 @@ export class ReportsComponent {
       }
       formGroup.hours += hours;
 
-      // 3. Get or create Kind Group within Form
       let kindGroup = formGroup.kinds.find((k) => k.name === kindName);
       if (!kindGroup) {
         kindGroup = { name: kindName, hours: 0, id: record.discipline_kinds?.id! };
@@ -141,17 +160,19 @@ export class ReportsComponent {
       kindGroup.hours += hours;
     }
 
-    // Sort by name for consistency
     const result = Array.from(disciplinesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
-    // Sort nested
     result.forEach((d) => {
       d.forms.sort((a, b) => a.name.localeCompare(b.name));
       d.forms.forEach((f) => {
-        f.kinds.sort((a, b) => a.id - b.id); //a.name.localeCompare(b.name));
+        f.kinds.sort((a, b) => a.id - b.id);
       });
     });
 
     return result;
   });
+
+  openBottomSheet() {
+    this.bottomSheet.open(BottomExportsComponent);
+  }
 }

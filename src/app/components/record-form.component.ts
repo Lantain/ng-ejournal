@@ -2,12 +2,11 @@ import { Component, computed, inject, input, model, signal, effect, output } fro
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AddRecordRequest, RecordService } from '../services/record.service';
+import { AddRecordRequest, RecordService, UpdateRecordRequest } from '../services/record.service';
 import { AuthService } from '../services/auth.service';
 import { MatCalendar, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatOptionModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { DisciplineService } from '../services/discipline.service';
 import { AsyncPipe } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
@@ -18,13 +17,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Record as AppRecord, Discipline } from '../model';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { combineLatest, map, startWith } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { combineLatest, map } from 'rxjs';
 
 import { GroupService } from '../services/group.service';
 
 import { GroupsInputComponent } from './inputs/groups-autocomplete.component';
 import { TopicSelectComponent } from './inputs/topic-select.component';
 import { toFormatedDateString } from '../utils';
+import { SemesterService } from '../services/semester.service';
 
 @Component({
   selector: 'app-record-form',
@@ -35,8 +36,6 @@ import { toFormatedDateString } from '../utils';
     MatCalendar,
     MatDatepickerModule,
     MatButtonToggleModule,
-    MatRadioGroup,
-    MatRadioButton,
     AsyncPipe,
     MatSelectModule,
     MatOptionModule,
@@ -54,17 +53,10 @@ import { toFormatedDateString } from '../utils';
           <div class="flex flex-row">
             <mat-calendar class="w-80" [(selected)]="selectedDateValue"></mat-calendar>
             <div class="flex-1 ml-4">
-              <div class="mb-4 flex flex-row justify-end">
-                <mat-radio-group formControlName="semester" aria-label="Семестр">
-                  <mat-radio-button class="mr-2" [value]="1">Осінній</mat-radio-button>
-                  <mat-radio-button [value]="2">Весняний</mat-radio-button>
-                </mat-radio-group>
-              </div>
-
               <div class="flex flex-row justify-between">
                 <mat-button-toggle-group formControlName="formId" aria-label="Форма навчання">
-                  <mat-button-toggle value="1">Денна форма</mat-button-toggle>
-                  <mat-button-toggle value="2">Заочна форма</mat-button-toggle>
+                  <mat-button-toggle [value]="1">Денна форма</mat-button-toggle>
+                  <mat-button-toggle [value]="2">Заочна форма</mat-button-toggle>
                 </mat-button-toggle-group>
 
                 <mat-button-toggle-group formControlName="hour" aria-label="Години">
@@ -126,7 +118,7 @@ import { toFormatedDateString } from '../utils';
                     [facultyId]="+recordForm.value.groupFacultyId!"
                     [courseId]="+recordForm.value.courseId!"
                     [formId]="+recordForm.value.formId!"
-                    (groupIds)="recordForm.patchValue({ groupIds: $event })"
+                    formControlName="groupIds"
                   ></app-groups-input>
                   } @else {
                   <mat-form-field class="w-full">
@@ -184,21 +176,20 @@ export class RecordFormComponent {
   private authService = inject(AuthService);
   private disciplineService = inject(DisciplineService);
   private fb = inject(FormBuilder);
+  private semesterService = inject(SemesterService);
 
   public record = input<AppRecord>();
-  public onFormSubmit = output<AddRecordRequest>();
+  public onFormSubmit = output<AddRecordRequest | UpdateRecordRequest>();
   public onDateChange = output<Date>();
 
   disciplines$ = this.disciplineService.getDisciplinesByUserId(this.authService.getUser()!.id);
 
-  recordForm = this.record() ? this.fromRecord(this.record()!) : this.createDefaultFormGroup();
+  recordForm = this.createDefaultFormGroup();
 
   // Create an observable that filters disciplines based on selected semester
   filteredDisciplines$ = combineLatest([
     this.disciplines$,
-    this.recordForm.controls.semester.valueChanges.pipe(
-      startWith(this.recordForm.controls.semester.value)
-    ),
+    toObservable(this.semesterService.semester),
   ]).pipe(
     map(([disciplines, semester]) => {
       if (!semester) return disciplines;
@@ -229,6 +220,13 @@ export class RecordFormComponent {
         this.recordForm.patchValue({ date: toFormatedDateString(date) });
       }
     });
+
+    effect(() => {
+      const record = this.record();
+      if (record) {
+        this.patchFormFromRecord(record);
+      }
+    });
   }
 
   get user() {
@@ -243,53 +241,60 @@ export class RecordFormComponent {
       topicId: [null as number | null],
       groupFacultyId: [this.user.departments[0].faculty_id, Validators.required],
       courseId: [0, Validators.required],
-      customGroup: [null],
+      customGroup: [null as string | null],
       isCustomGroup: [false],
 
       groupIds: [[] as number[], Validators.required],
       kindId: [0, Validators.required],
       hour: ['2', Validators.required],
       disciplineId: [0, Validators.required],
-      formId: [null, Validators.required],
+      formId: [null as number | null, Validators.required],
       date: ['', Validators.required],
-      semester: [
-        new Date().getMonth() > 9 || new Date().getMonth() < 2 ? 1 : 2,
-        Validators.required,
-      ],
     });
 
     return group;
   }
 
-  fromRecord(record: AppRecord) {
-    const group = this.fb.group({
-      userFacultyId: [record.user_faculty_id, Validators.required],
-      userDepartmentId: [record.user_department_id, Validators.required],
-      userId: [record.user_id, Validators.required],
-      topicId: [record.topic_id],
-      groupFacultyId: [+record.group_faculty, Validators.required],
-      courseId: [record.course_id, Validators.required],
-      groupIds: [record.group.split(',').map((g) => Number(g))],
-      customGroup: [record.group],
-      isCustomGroup: [record.is_custom_group],
+  patchFormFromRecord(record: AppRecord) {
+    this.recordForm.patchValue({
+      userFacultyId: record.user_faculty_id,
+      userDepartmentId: record.user_department_id,
+      userId: record.user_id,
+      topicId: record.topic_id,
+      groupFacultyId: +record.group_faculty,
+      courseId: record.course_id,
+      groupIds: record.group ? record.group.split(',').map((g) => Number(g)) : [],
+      customGroup: record.group,
+      isCustomGroup: record.is_custom_group,
 
-      kindId: [record.kind_id, Validators.required],
-      hour: [record.hour, Validators.required],
-      disciplineId: [+record.discipline_id, Validators.required],
-      formId: [record.form_id, Validators.required],
-      date: [record.date, Validators.required],
-      semester: [record.semester, Validators.required],
+      kindId: +record.kind_id,
+      hour: record.hour ? record.hour.toString() : '2',
+      disciplineId: +record.discipline_id,
+      formId: record.form_id,
+      date: record.date,
     });
 
-    if (record.is_custom_group) {
-      group.controls.customGroup.setValidators(Validators.required);
-      group.controls.groupIds.clearValidators();
-    } else {
-      group.controls.customGroup.clearValidators();
-      group.controls.groupIds.setValidators(Validators.required);
+    if (record.topic_id) {
+      this.showAddTopic.set(true);
     }
 
-    return group;
+    if (record.is_custom_group) {
+      this.recordForm.controls.customGroup.setValidators(Validators.required);
+      this.recordForm.controls.groupIds.clearValidators();
+    } else {
+      this.recordForm.controls.customGroup.clearValidators();
+      this.recordForm.controls.groupIds.setValidators(Validators.required);
+    }
+
+    this.recordForm.controls.customGroup.updateValueAndValidity();
+    this.recordForm.controls.groupIds.updateValueAndValidity();
+
+    if (record.date) {
+      const d = new Date(record.date);
+      if (!isNaN(d.getTime())) {
+        this.selectedDateValue.set(d);
+      }
+    }
   }
 
   toggleAddTopic($event: Event) {
@@ -318,24 +323,24 @@ export class RecordFormComponent {
 
   onSubmit() {
     if (this.recordForm.valid) {
-      const formValue = this.recordForm.value;
+      const formValue = this.recordForm.getRawValue();
       const payload: AddRecordRequest = {
         user_faculty_id: formValue.userFacultyId!,
         user_department_id: formValue.userDepartmentId!,
         user_id: formValue.userId!,
         topic_id: formValue.topicId ?? null,
-        group_faculty: formValue.groupFacultyId!.toString(),
-        course_id: formValue.courseId!.toString(),
+        group_faculty: String(formValue.groupFacultyId),
+        course_id: String(formValue.courseId),
         group: formValue.isCustomGroup
           ? formValue.customGroup || ''
           : (formValue.groupIds || []).join(','),
-        kind_id: formValue.kindId!.toString(),
+        kind_id: String(formValue.kindId),
         hour: Number(formValue.hour),
-        discipline_id: formValue.disciplineId!.toString(),
-        form_id: formValue.formId!.toString(),
+        discipline_id: String(formValue.disciplineId),
+        form_id: String(formValue.formId),
         date: formValue.date!,
         is_custom_group: !!formValue.isCustomGroup,
-        semester: formValue.semester!.toString(),
+        semester: this.semesterService.semester().toString(),
       };
 
       this.onFormSubmit.emit(payload);

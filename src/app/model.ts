@@ -103,6 +103,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   departments: Department[];
+  role?: Role;
 }
 
 export interface LearningForm {

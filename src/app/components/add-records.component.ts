@@ -12,10 +12,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { Record as AppRecord } from '../model';
 import { RecordComponent } from './record.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { RecordsStateService } from '../services/records-state.service';
+import { Router } from '@angular/router';
 import { GroupService } from '../services/group.service';
 import { toFormatedDateString } from '../utils';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RecordFormComponent } from './record-form.component';
+import { SemesterService } from '../services/semester.service';
 
 @Component({
   selector: 'app-add-records',
@@ -43,18 +46,24 @@ import { RecordFormComponent } from './record-form.component';
     <h2 class="mt-8 text-xl">В цей день {{ formattedSelectedDay() }}</h2>
     <div>
       @for (record of dayRecords(); track record.id) {
-      <app-record (remove)="removeRecord(record.id)" [record]="record"></app-record>
+      <app-record
+        (remove)="removeRecord(record.id)"
+        (edit)="onEditRecord(record)"
+        [record]="record"
+      ></app-record>
       }
     </div>
     }
   `,
 })
 export class AddRecordsComponent {
-  records = input.required<AppRecord[]>();
-  recordCreated = output<void>();
-  onRemoveRecord = output<number>();
+  private recordsState = inject(RecordsStateService);
+  records = this.recordsState.records;
+
   private recordService = inject(RecordService);
   private snackBar = inject(MatSnackBar);
+  private semesterService = inject(SemesterService);
+  private router = inject(Router);
 
   selectedDateValue = model<Date | null>(null);
 
@@ -64,7 +73,11 @@ export class AddRecordsComponent {
   });
 
   dayRecords = computed(() =>
-    this.records().filter((record) => record.date === this.formattedSelectedDay())
+    this.records().filter(
+      (record) =>
+        record.date === this.formattedSelectedDay() &&
+        Number(record.semester) === this.semesterService.semester()
+    )
   );
 
   onFormSubmit(payload: AddRecordRequest) {
@@ -74,7 +87,7 @@ export class AddRecordsComponent {
         this.snackBar.open('Запис створений успішно', 'Закрити', {
           duration: 4000,
         });
-        this.recordCreated.emit();
+        this.recordsState.refresh();
       },
       error: (err) => {
         console.error('Error creating record', err);
@@ -86,6 +99,18 @@ export class AddRecordsComponent {
   }
 
   removeRecord(id: number) {
-    this.onRemoveRecord.emit(id);
+    if (!confirm('Видалити запис?')) {
+      return;
+    }
+    this.recordService.delete(id).subscribe(() => {
+      this.snackBar.open('Запис видалений успішно', 'Закрити', {
+        duration: 4000,
+      });
+      this.recordsState.refresh();
+    });
+  }
+
+  onEditRecord(record: AppRecord) {
+    this.router.navigate(['dashboard', 'records', 'edit', record.id]);
   }
 }

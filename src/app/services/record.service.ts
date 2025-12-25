@@ -41,7 +41,13 @@ export interface AddRecordRequest {
   semester: string;
 }
 
-@Injectable()
+export interface UpdateRecordRequest extends AddRecordRequest {
+  id: number;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
 export class RecordService {
   constructor(private http: HttpClient) {}
 
