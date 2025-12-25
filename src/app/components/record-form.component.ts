@@ -4,7 +4,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AddRecordRequest, RecordService, UpdateRecordRequest } from '../services/record.service';
 import { AuthService } from '../services/auth.service';
-import { MatCalendar, MatDatepickerModule } from '@angular/material/datepicker';
+import { RecordsStateService } from '../services/records-state.service';
+import {
+  MatCalendar,
+  MatDatepickerModule,
+  MatCalendarCellClassFunction,
+} from '@angular/material/datepicker';
 import { MatOptionModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { DisciplineService } from '../services/discipline.service';
@@ -51,7 +56,11 @@ import { SemesterService } from '../services/semester.service';
       <mat-card-content>
         <form [formGroup]="recordForm" (ngSubmit)="onSubmit()">
           <div class="flex flex-row">
-            <mat-calendar class="w-80" [(selected)]="selectedDateValue"></mat-calendar>
+            <mat-calendar
+              class="w-80"
+              [(selected)]="selectedDateValue"
+              [dateClass]="dateClass"
+            ></mat-calendar>
             <div class="flex-1 ml-4">
               <div class="flex flex-row justify-between">
                 <mat-button-toggle-group formControlName="formId" aria-label="Форма навчання">
@@ -171,12 +180,31 @@ import { SemesterService } from '../services/semester.service';
       </mat-card-content>
     </mat-card>
   `,
+  styles: [
+    `
+      ::ng-deep .has-records .mat-calendar-body-cell-content::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: #3f51b5; /* Primary color indicator */
+      }
+      ::ng-deep .has-records .mat-calendar-body-cell-content {
+        position: relative;
+      }
+    `,
+  ],
 })
 export class RecordFormComponent {
   private authService = inject(AuthService);
   private disciplineService = inject(DisciplineService);
   private fb = inject(FormBuilder);
   private semesterService = inject(SemesterService);
+  private recordsState = inject(RecordsStateService);
 
   public record = input<AppRecord>();
   public onFormSubmit = output<AddRecordRequest | UpdateRecordRequest>();
@@ -208,6 +236,20 @@ export class RecordFormComponent {
   });
 
   public showAddTopic = signal(false);
+
+  datesWithRecords = computed(() => {
+    const dates = new Set<string>();
+    this.recordsState.records().forEach((r) => dates.add(r.date));
+    return dates;
+  });
+
+  dateClass: MatCalendarCellClassFunction<Date> = (cellDate, view) => {
+    if (view === 'month') {
+      const dateStr = toFormatedDateString(cellDate);
+      return this.datesWithRecords().has(dateStr) ? 'has-records' : '';
+    }
+    return '';
+  };
 
   selectedDateValue = model<Date | null>(null);
 
