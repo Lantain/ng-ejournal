@@ -59,6 +59,7 @@ import { SemesterService } from '../services/semester.service';
             <mat-calendar
               class="w-80"
               [(selected)]="selectedDateValue"
+              [startAt]="startAt()"
               [dateClass]="dateClass"
             ></mat-calendar>
             <div class="flex-1 ml-4">
@@ -242,7 +243,6 @@ export class RecordFormComponent {
     this.recordsState.records().forEach((r) => dates.add(r.date));
     return dates;
   });
-
   dateClass: MatCalendarCellClassFunction<Date> = (cellDate, view) => {
     if (view === 'month') {
       const dateStr = toFormatedDateString(cellDate);
@@ -250,6 +250,15 @@ export class RecordFormComponent {
     }
     return '';
   };
+
+  startAt = computed(() => {
+    const r = this.record();
+    if (r && r.date) {
+      const d = new Date(r.date);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return new Date();
+  });
 
   selectedDateValue = model<Date | null>(null);
 
