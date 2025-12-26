@@ -1,4 +1,14 @@
-import { Component, computed, inject, input, model, signal, effect, output } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  model,
+  signal,
+  effect,
+  output,
+  untracked,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,7 +32,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Record as AppRecord, Discipline } from '../model';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest, map } from 'rxjs';
 
 import { GroupService } from '../services/group.service';
@@ -31,6 +41,7 @@ import { GroupsInputComponent } from './inputs/groups-autocomplete.component';
 import { TopicSelectComponent } from './inputs/topic-select.component';
 import { toFormatedDateString } from '../utils';
 import { SemesterService } from '../services/semester.service';
+import { RecordFormStateService } from '../services/record-form-state.service';
 
 @Component({
   selector: 'app-record-form',
@@ -147,23 +158,18 @@ import { SemesterService } from '../services/semester.service';
                 ></app-topic-select>
               </div>
               }
-              <div class="w-full flex flex-row justify-center items-center mt-8 gap-8">
+              <div class="w-full flex flex-row justify-center items-center mt-4 gap-8">
                 @if (!showAddTopic()) {
                 <button matButton (click)="toggleAddTopic($event)">
                   <mat-icon>add_comment</mat-icon>
                   Додати тему
                 </button>
-                }
-                <button
-                  class="w-72"
-                  matButton="filled"
-                  type="submit"
-                  [disabled]="recordForm.invalid"
-                >
-                  <mat-icon>add</mat-icon>
-                  {{ record() ? 'Редагувати запис' : 'Створити новий запис' }}
+                } @if (!record()) {
+                <button matButton (click)="resetForm($event)">
+                  <mat-icon>refresh</mat-icon>
+                  Очистити
                 </button>
-                @if (!recordForm.value.isCustomGroup) {
+                } @if (!recordForm.value.isCustomGroup) {
                 <button matButton (click)="toggleCustomGroup($event)">
                   <mat-icon>group</mat-icon>
                   Ручний ввод групи
@@ -174,6 +180,17 @@ import { SemesterService } from '../services/semester.service';
                   Керований ввод групи
                 </button>
                 }
+              </div>
+              <div class="w-full flex flex-row justify-center items-center mt-8 gap-8">
+                <button
+                  class="w-72"
+                  matButton="filled"
+                  type="submit"
+                  [disabled]="recordForm.invalid"
+                >
+                  <mat-icon>{{ record() ? 'edit' : 'add' }}</mat-icon>
+                  {{ record() ? 'Редагувати запис' : 'Створити новий запис' }}
+                </button>
               </div>
             </div>
           </div>
@@ -206,6 +223,7 @@ export class RecordFormComponent {
   private fb = inject(FormBuilder);
   private semesterService = inject(SemesterService);
   private recordsState = inject(RecordsStateService);
+  private recordFormState = inject(RecordFormStateService);
 
   public record = input<AppRecord>();
   public onFormSubmit = output<AddRecordRequest | UpdateRecordRequest>();
@@ -276,6 +294,38 @@ export class RecordFormComponent {
       const record = this.record();
       if (record) {
         this.patchFormFromRecord(record);
+      } else {
+        const state = untracked(() => this.recordFormState.state());
+        if (state) {
+          this.recordForm.patchValue(state, { emitEvent: false });
+
+          if (state.topicId) {
+            this.showAddTopic.set(true);
+          }
+
+          if (state.isCustomGroup) {
+            this.recordForm.controls.customGroup.setValidators(Validators.required);
+            this.recordForm.controls.groupIds.clearValidators();
+          } else {
+            this.recordForm.controls.customGroup.clearValidators();
+            this.recordForm.controls.groupIds.setValidators(Validators.required);
+          }
+          this.recordForm.controls.customGroup.updateValueAndValidity({ emitEvent: false });
+          this.recordForm.controls.groupIds.updateValueAndValidity({ emitEvent: false });
+
+          if (state.date) {
+            const d = new Date(state.date);
+            if (!isNaN(d.getTime())) {
+              this.selectedDateValue.set(d);
+            }
+          }
+        }
+      }
+    });
+
+    this.recordForm.valueChanges.pipe(takeUntilDestroyed()).subscribe((val) => {
+      if (!this.record()) {
+        this.recordFormState.saveState(val);
       }
     });
   }
@@ -346,6 +396,38 @@ export class RecordFormComponent {
         this.selectedDateValue.set(d);
       }
     }
+  }
+
+  resetForm($event: Event) {
+    $event.preventDefault();
+    $event.stopPropagation();
+
+    this.showAddTopic.set(false);
+    this.selectedDateValue.set(null);
+    this.recordFormState.clearState();
+
+    this.recordForm.reset({
+      userFacultyId: this.user.departments[0].faculty_id,
+      userDepartmentId: this.user.departments[0].id,
+      userId: this.user.id,
+      topicId: null,
+      groupFacultyId: this.user.departments[0].faculty_id,
+      courseId: 0,
+      customGroup: null,
+      isCustomGroup: false,
+
+      groupIds: [],
+      kindId: 0,
+      hour: '2',
+      disciplineId: 0,
+      formId: null,
+      date: '',
+    });
+
+    this.recordForm.controls.customGroup.clearValidators();
+    this.recordForm.controls.groupIds.setValidators(Validators.required);
+    this.recordForm.controls.customGroup.updateValueAndValidity();
+    this.recordForm.controls.groupIds.updateValueAndValidity();
   }
 
   toggleAddTopic($event: Event) {

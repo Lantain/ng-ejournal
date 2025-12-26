@@ -19,6 +19,7 @@ import { toFormatedDateString } from '../utils';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RecordFormComponent } from './record-form.component';
 import { SemesterService } from '../services/semester.service';
+import { RecordFormStateService } from '../services/record-form-state.service';
 
 @Component({
   selector: 'app-add-records',
@@ -64,6 +65,7 @@ export class AddRecordsComponent {
   private snackBar = inject(MatSnackBar);
   private semesterService = inject(SemesterService);
   private router = inject(Router);
+  private recordFormState = inject(RecordFormStateService);
 
   selectedDateValue = model<Date | null>(null);
 
@@ -88,6 +90,7 @@ export class AddRecordsComponent {
           duration: 4000,
         });
         this.recordsState.refresh();
+        this.recordFormState.clearState();
       },
       error: (err) => {
         console.error('Error creating record', err);

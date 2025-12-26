@@ -43,15 +43,6 @@ import { filter, map } from 'rxjs';
       </a>
       <a
         mat-tab-link
-        routerLink="list"
-        routerLinkActive
-        #rlaList="routerLinkActive"
-        [active]="rlaList.isActive"
-      >
-        Перегляд записів
-      </a>
-      <a
-        mat-tab-link
         routerLink="report"
         routerLinkActive
         #rlaReport="routerLinkActive"
@@ -59,6 +50,16 @@ import { filter, map } from 'rxjs';
       >
         Звіт
       </a>
+      <a
+        mat-tab-link
+        routerLink="list"
+        routerLinkActive
+        #rlaList="routerLinkActive"
+        [active]="rlaList.isActive"
+      >
+        Перегляд записів
+      </a>
+
       @if (isEditing()) {
       <a mat-tab-link [active]="true"> Редагування </a>
       }

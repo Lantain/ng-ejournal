@@ -55,7 +55,7 @@ interface DisciplineGroup {
         }
       </div>
 
-      <div class="relative w-full">
+      <div class="relative w-full pb-6">
         @for (discipline of reportData(); track discipline.name) {
         <div class="relative block mb-4 border rounded-lg overflow-hidden w-full">
           <div class="bg-gray-200 p-3 font-bold flex justify-between items-center">
